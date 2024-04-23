@@ -1,11 +1,21 @@
 import { React, useState, useEffect } from "react";
 import {useNavigate} from 'react-router-dom'
 import "./Game.css";
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import io from 'socket.io-client'
+import cross from '../cross.png'
+import circle from '../circle.png'
+const socket = io.connect('http://localhost:5001');
 function Cell({value, onCellClick, isWin}){
   return (
     <button className={`cell ${isWin ? 'highlight' : ''}`}    onClick={onCellClick}> 
-      {value}
+      {value === 'X' ?
+      (<img src={cross} height={80} width={80} alt=''/>):
+      value === 'O'?
+      (<img src={circle} height={80} width={80} alt=''/>):
+        value
+      }
     </button>
   );
 }
@@ -31,10 +41,15 @@ function winner(cells){
 
 
 export default function Game() {
-  const [xMoves, setXmoves] = useState(true);
+  const [nextMoves, setNextmoves] = useState('O');
   const [cells, setCells] = useState(Array(9).fill(null));
   const [playerOnline,setPlayerOnline] = useState(false);
+  const [gameStart, setGameStart] = useState(false);
+  const [playingAs, setPlayingAs] =useState();
+  const [playerName, setPlayerName] =useState();
+  const [opponentPLayer, setOpponentPlayer] =useState();
   const navigate =useNavigate();
+  const [room, setRoom] =useState();
     
   useEffect(() => {
     const fetchGame = async () => {
@@ -52,6 +67,9 @@ export default function Game() {
           const data = await response.json();
           if(data.verified !=='yes'){
             navigate('/');
+          }
+          else{
+            setPlayerName(data.email);
           }
         } else {
           console.error('Error:', response.statusText);
@@ -72,24 +90,27 @@ export default function Game() {
 
   function cellClick(i) {
     const res = winner(cells)
-    if (res[0] || cells[i]) {
+    if (res[0] || cells[i] || (nextMoves !==playingAs)) {
       return;
     }
     const nextCells = cells.slice();
-    if (xMoves) {
-      nextCells[i] = 'X';
+    nextCells[i] = nextMoves;
+    if (nextMoves==='X') {
+      setNextmoves('O');
+      socket.emit("move",{nextCells, nextMoves:'O', room})
     } else {
-      nextCells[i] = 'O';
+      setNextmoves('X');
+      socket.emit("move",{nextCells, nextMoves:'X', room})
     }
     setCells(nextCells);
-    setXmoves(!xMoves);
+    
   }
 
 
   function restart(){
     const temp =Array(9).fill(null)
     setCells(temp);
-    setXmoves(true);
+    setNextmoves('O');
   }
 
   var result = winner(cells);
@@ -107,22 +128,46 @@ export default function Game() {
     status = "Game over! Draw !!!"
   }
   else {
-    status = 'Next player: ' + (xMoves ? 'X' : 'O');
+    status = (
+      <div>
+        Next player: 
+        {nextMoves === 'X' ? (
+          <img src={cross} height={20} width={20}  alt=''/>
+        ) : (
+          <img src={circle} height={20} width={20}  alt=''/>
+        )}
+      </div>
+    );
   }
 
   function playOnline() {
     setPlayerOnline(true);
-    
+    socket.emit("start", {cells, playerName});
   }
-
+  
+  socket.on("room_assigned", (data)=>{
+    
+    setOpponentPlayer(data.opponent);
+    setPlayingAs(data.playingAs);
+    setGameStart(true);
+    setRoom(data.room);
+    
+  })
+  socket.on("moveReply",(data)=>{
+    const newcells = data.nextCells;
+    const nxMv = data.nextMoves
+    setCells(newcells);
+    setNextmoves(nxMv);
+    console.log(playerName, opponentPLayer, room, playingAs);
+  })
 
   return (
     <div> 
 
       <div className="navbar">
         <span className="title">Tic-Tac-Toe</span>
-        <span className="username">Logged in as<br/> user<br/>
-        <button className="logout" onClick={logout}>logout</button></span>
+        <span className="username">Logged in as <button className="logout" onClick={logout}>logout</button><br/> {playerName}<br/>
+        </span>
       </div>
       
 
@@ -131,16 +176,26 @@ export default function Game() {
             <div className="play">
               <button className="playonline" onClick={playOnline}> Play online</button>
               </div>}
-
-        {playerOnline && <div>
+        {playerOnline && !gameStart &&
+            <div className="loading">
+                <FontAwesomeIcon icon={faSpinner} spin />
+                    {" Finding pair, Please wait ..."}
+              </div>}
+        {playerOnline && gameStart && <div>
           <div className="nextmove">
             {(gameWinner||gameEnd) && <button className="restart" onClick={restart}> Restart Game </button>}<br/> 
             {status} 
           </div>
-
+          
           <div className="playername">
-            <span className="player1">Player_1</span>
-            <span className="player2">Player_2</span>
+            <div className="signs">
+              <span className={`crosssign ${nextMoves === 'X'? 'turn':''}`}></span>
+              <span className={`circlesign ${nextMoves === 'O'? 'turn':''}`}></span>
+            </div>
+            <div className="playernames">
+              <span className={`player1 ${nextMoves === 'X'? 'turn':''}`}>{playingAs=== 'X' ? playerName: opponentPLayer}</span>
+              <span className={`player2 ${nextMoves === 'O'? 'turn':''}`}>{playingAs=== 'O' ? playerName: opponentPLayer}</span>
+            </div>
           </div>
 
           <div className="board">

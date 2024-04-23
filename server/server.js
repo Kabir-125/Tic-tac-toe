@@ -6,7 +6,8 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-
+const {Server} = require("socket.io");
+const http = require("http")
 const nodemailer = require('nodemailer');
 const nodemailerSendgrid = require('nodemailer-sendgrid');
 const transport = nodemailer.createTransport(
@@ -17,14 +18,21 @@ nodemailerSendgrid({
 
 const app = express()
 
+
 //middlewares
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(passport.initialize());
 app.use(cors());
 
+const server= http.createServer(app);
+const io = new Server(server,{
+  cors:{
+    origin:"http://localhost:3000"
+  }
+})
 // Loging a user and return a JWT token
-let user_list=[{ email: 'ishtiak125@gmail.com', password: 'rt' }];
+let user_list=[{ email: 'ishtiak125@gmail.com', password: 'rt' },{ email: 'test@gmail.com', password: 'rt' }];
 const jwtMethod = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: 'Amar secret key'
@@ -102,7 +110,57 @@ app.post('/api/verifiedRegister',(req,res)=>{
 
 // game section veryfying through jwt
 app.post('/api/game',passport.authenticate('jwt', { session: false }),(req,res)=>{
-    res.status(200).json({verified:"yes"});
+  const token = req.headers.authorization.split(' ')[1]; 
+  const decodedToken = jwt.decode(token);
+  const userEmail = decodedToken.sub;
+
+    res.status(200).json({verified:"yes", email:userEmail});
 })
 
+//socket logic
+const players = []
+const rooms =[]
+io.on("connection",(socket)=>{
+
+  socket.on("start", (data)=>{
+    players[socket.id] = {state: "Waiting",
+                          name: data.playerName
+                            }
+    const waitingPlayers = Object.keys(players).filter((i) => players[i].state === 'Waiting');
+
+        if(waitingPlayers.length>=2){
+          while (waitingPlayers.length >= 2) {
+            var index = parseInt(100000000*Math.random())%waitingPlayers.length;
+            const player1 = waitingPlayers[index];
+            waitingPlayers.splice(index,1);
+
+            var index2 = parseInt(Math.random()*10000)%waitingPlayers.length;
+            const player2 = waitingPlayers[index2];
+            waitingPlayers.splice(index2,1);
+
+
+            const room = 'room-' + Math.random().toString(36).substr(2, 5);
+            rooms[room] = [player1, player2];
+
+            io.to(player1).emit('room_assigned', { room, opponent:players[player2].name , playingAs:'O'});
+            io.to(player2).emit('room_assigned', { room, opponent:players[player1].name , playingAs:'X'});
+
+            players[player1].state = "playing";
+            players[player2].state = "playing";
+        }
+      }
+  })
+
+  socket.on("move",({nextCells, nextMoves, room})=>{
+    var p1,p2;
+    p1=rooms[room][0];
+    p2=rooms[room][1];
+    io.to(p1).emit('moveReply', { nextCells, nextMoves });
+    io.to(p2).emit('moveReply', { nextCells, nextMoves });
+    
+  })
+
+})
+
+server.listen(5001,()=>{console.log("hi 5001")})
 app.listen(5000,()=>{console.log("hi 5000")});
