@@ -8,11 +8,13 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const {Server} = require("socket.io");
 const http = require("http")
+const sequelize = require('./db')
+const users = require('./user')
 const nodemailer = require('nodemailer');
 const nodemailerSendgrid = require('nodemailer-sendgrid');
 const transport = nodemailer.createTransport(
 nodemailerSendgrid({
-     apiKey: "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"
+     apiKey: "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"
   })
 );
 
@@ -32,7 +34,6 @@ const io = new Server(server,{
   }
 })
 // Loging a user and return a JWT token
-let user_list=[{ email: 'ishtiak125@gmail.com', password: 'rt' },{ email: 'test@gmail.com', password: 'rt' }];
 const jwtMethod = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: 'Amar secret key'
@@ -47,19 +48,12 @@ passport.use(new JwtStrategy(jwtMethod, (jwtData, done) => {
       }
   }));
 
-app.post('/api/login',(req,res)=>{
+app.post('/api/login',async (req,res)=>{
   const {email, password} = req.body;
-  var cur_user;
-  var found = false;
+  const cur_user = await users.findOne({where:{email:email}});
+  console.log(cur_user)
 
-  console.log(user_list);
-    user_list.forEach(user => {
-      if(email === user.email){
-        found = true;
-        cur_user=user;
-      }
-    });
-  if (found){
+  if (cur_user!== null){
       if(email === cur_user.email && password === cur_user.password){
         // Login successful
         const jwttoken = jwt.sign({ sub: email }, 'Amar secret key');
@@ -75,15 +69,15 @@ app.post('/api/login',(req,res)=>{
 })
 
 // registering a new user
-app.post('/api/register',(req,res)=>{
+app.post('/api/register',async (req,res)=>{
     const {email, password, repassword} = req.body;
 
-    var found = user_list.find(user => email === user.email);
+    var found = await users.findOne({where:{email:email}});
 
     if(password !== repassword){
         res.status(401).json({error:"Both password should match"});
     }
-    else if (found){
+    else if (found!==null){
         res.status(401).json({error:"User exits !!!"});
     }
     else{
@@ -93,19 +87,48 @@ app.post('/api/register',(req,res)=>{
         from: 'kabir73826@gmail.com',
         to: `User Client <${email}>`,
        subject: 'Confirm your e-mail',
-       html: `<h1>your confirmation code is ${code}</h1>`
+       html: `<html>
+                <head>
+                  <style type="text/css">
+                    body, p, div {
+                      font-family: Helvetica, Arial, sans-serif;
+                      font-size: 16px;
+                    }
+                  </style>
+                  <title></title>
+                </head>
+                <body>
+                <center>
+                  <p>
+                    <strong>Your Tic-tac-toe account verification code is: ${code}</strong>
+                  </p>
+                </center>
+                </body>
+              </html>`
      });
       res.status(200).json({sent:code});
     }
 })
 
-app.post('/api/verifiedRegister',(req,res)=>{
+app.post('/api/verifiedRegister',async (req,res)=>{
   const {email, password} = req.body;
-  user_list.push({
-    "email":email,
-    "password":password
-  });
-  res.status(200).json({message:"User successfully added."});
+  try {
+        sequelize.sync()
+        .then(() => {
+            console.log('Database synchronized');
+        })
+        .catch(err => {
+            console.error('Error synchronizing database:', err);
+        });
+        const newUser = await users.create({
+            email: email,
+            password: password
+        });
+        res.status(200).json({ message: "User successfully added."});
+    } catch (error) {
+        console.error('Error adding user:', error);
+        res.status(500).json({ message: "Error adding user." });
+    }
 })
 
 // game section veryfying through jwt
