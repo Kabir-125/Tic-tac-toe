@@ -10,8 +10,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  var jwttoken = localStorage.getItem('jwt') ||'';
-
   function validateForm() {
     return email.length > 0 && password.length > 0;
   }
@@ -39,9 +37,8 @@ export default function Login() {
       if (data.error) {
         alert(data.error);
       } else {
-        jwttoken =data.jwt;
-        localStorage.setItem('jwt',jwttoken);
-        console.log(jwttoken);
+        //successful login
+        localStorage.setItem('jwt',data.jwt)
         alert(data.message);
         navigate("/game");
       }

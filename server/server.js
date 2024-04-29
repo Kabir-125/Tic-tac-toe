@@ -5,16 +5,19 @@ const bodyParser = require('body-parser');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwt = require('jsonwebtoken');
+var userJwt ='';
 const cors = require('cors');
 const {Server} = require("socket.io");
 const http = require("http")
 const sequelize = require('./db')
 const users = require('./user')
+const games = require('./games')
+const gamesPerDay =  require('./gamesPerDay')
 const nodemailer = require('nodemailer');
 const nodemailerSendgrid = require('nodemailer-sendgrid');
 const transport = nodemailer.createTransport(
 nodemailerSendgrid({
-     apiKey: "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"
+      // sendgrid api key
   })
 );
 
@@ -57,7 +60,11 @@ app.post('/api/login',async (req,res)=>{
       if(email === cur_user.email && password === cur_user.password){
         // Login successful
         const jwttoken = jwt.sign({ sub: email }, 'Amar secret key');
-        res.status(200).json({message:"Successful login", jwt: jwttoken});
+        cur_user.jwt = jwttoken;
+        userJwt = jwttoken;
+
+        await cur_user.save();
+        res.status(200).json({message:"Successful login", jwt:jwttoken});
       }
       else{
         res.status(401).json({error:"Incorrect Password"});
@@ -68,10 +75,13 @@ app.post('/api/login',async (req,res)=>{
     }
 })
 
+app.get('/api/getjwt',(req,res)=>{
+  res.status(200).json({jwt:userJwt});
+})
 // registering a new user
 app.post('/api/register',async (req,res)=>{
     const {email, password, repassword} = req.body;
-
+    
     var found = await users.findOne({where:{email:email}});
 
     if(password !== repassword){
@@ -83,6 +93,7 @@ app.post('/api/register',async (req,res)=>{
     else{
       //verification 
       const code=parseInt(Math.random()*10000);
+      console.log(code);
       transport.sendMail({
         from: 'kabir73826@gmail.com',
         to: `User Client <${email}>`,
@@ -120,9 +131,11 @@ app.post('/api/verifiedRegister',async (req,res)=>{
         .catch(err => {
             console.error('Error synchronizing database:', err);
         });
+        const jwttoken = jwt.sign({ sub: email }, 'Amar secret key');
         const newUser = await users.create({
             email: email,
-            password: password
+            password: password,
+            jwt:jwttoken
         });
         res.status(200).json({ message: "User successfully added."});
     } catch (error) {
@@ -140,12 +153,24 @@ app.post('/api/game',passport.authenticate('jwt', { session: false }),(req,res)=
     res.status(200).json({verified:"yes", email:userEmail});
 })
 
+// get games details played by user on each days
+app.post('/api/gameDay',async (req,res)=>{
+  const {email} = req.body;
+  if(email){
+    const usersday = await gamesPerDay.findAll({where:{email:email}})
+    res.status(200).json(usersday);
+  }
+  else
+    res.status(404).json(null)
+
+})
+
 //socket logic
 const players = []
 const rooms =[]
 io.on("connection",(socket)=>{
 
-  socket.on("start", (data)=>{
+  socket.on("start", async (data)=>{
     players[socket.id] = {state: "Waiting",
                           name: data.playerName
                             }
@@ -164,9 +189,13 @@ io.on("connection",(socket)=>{
 
             const room = 'room-' + Math.random().toString(36).substr(2, 5);
             rooms[room] = [player1, player2];
-
-            io.to(player1).emit('room_assigned', { room, opponent:players[player2].name , playingAs:'O'});
-            io.to(player2).emit('room_assigned', { room, opponent:players[player1].name , playingAs:'X'});
+            const newGame = await games.create({
+                                                  room:room,
+                                                  player1:players[player1].name,
+                                                  player2:players[player2].name
+                                                })
+            io.to(player1).emit('room_assigned', { room, opponent:players[player2].name , playingAs:'O', id:newGame.id});
+            io.to(player2).emit('room_assigned', { room, opponent:players[player1].name , playingAs:'X', id:newGame.id});
 
             players[player1].state = "playing";
             players[player2].state = "playing";
@@ -183,7 +212,92 @@ io.on("connection",(socket)=>{
     
   })
 
+  socket.on("game_over",async (data)=>{
+    console.log("game isssssssssssssssss ooooooooooooovvvvvvvvvvvvveeeeeeeeeeeerrrrrrrrrrrrr")
+    const game = await games.findByPk(data.id);
+    if(game.winner===null){
+      console.log(data)
+      game.winner=data.winner;
+
+      //game result update
+      const player1 = await users.findOne({where:{email:data.player1}})
+      const player2 = await users.findOne({where:{email:data.player2}})
+
+      player1.gamesPlayed = player1.gamesPlayed+1;
+      if(data.winner===data.player1)
+        player1.gamesWon++;
+
+      player2.gamesPlayed = player2.gamesPlayed+1;
+      if(data.winner===data.player2)
+          player2.gamesWon++;
+
+      await game.save();
+      await player1.save()
+      await player2.save()
+
+
+
+      // Random database input for better displaying dot matrix graph
+
+      // const testday = new Date(2024,0,1);
+      // for(let i=0;i<365;i++){
+      //   testday.setDate(testday.getDate()+1);
+      //   testday.setHours(0, 0, 0, 0);
+      //   console.log(testday);
+      //   var testd = testday.toISOString().split('T')[0];
+      //   console.log(testd);
+      //   var t1,t2,t3;
+      //   t1=parseInt(100000000*Math.random())%21;
+      //   t2=parseInt(100000000*Math.random())%21;
+      //   t3=parseInt(100000000*Math.random())%21;
+      //   if(t1*t2*t3 === 0 && t1+t2+t3>10){
+      //     t1=t2=t3=0;
+      //   }
+        
+      //   const test = await gamesPerDay.create({
+      //     email:'test@gmail.com',
+      //     date:testd,
+      //     played:t1+t2+t3,
+      //     won:t1,
+      //     lost:t2,
+      //     draw:t3
+      //   })
+      // }
+
+      
+      //player stat update per day
+      const today = new Date();
+      var player1stat = await gamesPerDay.findOne({where:{email:data.player1,date:today}})
+      if(player1stat == null ){
+        player1stat = await gamesPerDay.create({email:data.player1,date:today})
+      }
+      var player2stat = await gamesPerDay.findOne({where:{email:data.player2, date:today}})
+      if(player2stat == null ){
+        player2stat = await gamesPerDay.create({email:data.player2,date:today})
+      }
+
+      player1stat.played++;
+      player2stat.played++;
+      if(data.winner===data.player1){
+        player1stat.won++;
+        player2stat.lost++;
+      }
+      else if(data.winner === data.player2){
+        player2stat.won++;
+        player1stat.lost++;
+      }
+      else{
+        player1stat.draw++;
+        player2stat.darw++;
+      }
+
+      await player1stat.save();
+      await player2stat.save();
+    }
+  })
 })
 
 server.listen(5001,()=>{console.log("hi 5001")})
-app.listen(5000,()=>{console.log("hi 5000")});
+app.listen(5000,()=>{
+  console.log("hi 5000")
+});

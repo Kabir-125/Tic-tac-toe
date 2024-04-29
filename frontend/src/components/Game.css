@@ -17,17 +17,35 @@
   text-align: right;
 }
 
-
+.page {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+}
 .game {
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
   align-items: center;
   width: 100%; 
   padding: 20px; 
   box-sizing: border-box; 
+  margin-left: 25px;
 }
 
+.side-panel {
+  flex-shrink: 0;
+  width: 40%; 
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-left: 20px;
+}
 
+.performance_matrix {
+  margin-top: 150px;
+}
 .nextmove {
   display: flex;
   justify-content: center;

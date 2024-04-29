@@ -1,0 +1,95 @@
+.performance {
+    display: flex;
+    align-items:flex-start;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+.head{
+  margin-bottom: 20px;
+  font-weight: bold;
+  display: flex;
+  width: 400px;
+  justify-content: space-between;
+}
+.matrix {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .matrix-row {
+    display: flex;
+  }
+  
+.dot {
+  margin: 1px;
+  height: 10px ;
+  width: 10px;
+  position: relative;
+  /* height: fit-content;
+  width: fit-content; */ 
+  border-radius: 2px;
+  background-color: rgb(233, 233, 233);
+}
+
+.dotcard{
+  position: absolute;
+  top: -170px; 
+  left: -55px; 
+  width: 130px;
+  height: 150px;
+  background-color: rgb(252, 252, 252);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardDate {
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  color: rgb(32, 32, 32);
+  text-align: center;
+}
+
+.details-row {
+  display: flex;
+  align-items:center;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.months {
+  color: rgb(128, 128, 128);
+  font-size: small;
+  width: 500px;
+  display: flex;
+  justify-content: space-between; 
+}
+
+.month{
+  margin :0 3.15%;
+}
+
+
+select {
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+select:hover {
+  border-color: #888;
+}
+
+select:focus {
+  outline: none;
+  border-color: #555;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
