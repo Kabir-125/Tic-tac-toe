@@ -18,6 +18,8 @@ const nodemailerSendgrid = require('nodemailer-sendgrid');
 const transport = nodemailer.createTransport(
 nodemailerSendgrid({
       // sendgrid api key
+      
+     apiKey: "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"
   })
 );
 
@@ -189,6 +191,9 @@ io.on("connection",(socket)=>{
 
             const room = 'room-' + Math.random().toString(36).substr(2, 5);
             rooms[room] = [player1, player2];
+            players[player1].room = room;
+            players[player2].room = room;
+
             const newGame = await games.create({
                                                   room:room,
                                                   player1:players[player1].name,
@@ -294,6 +299,24 @@ io.on("connection",(socket)=>{
       await player1stat.save();
       await player2stat.save();
     }
+  })
+
+  //disconnet
+  socket.on('disconnect',()=>{
+    var room;
+    if(players[socket.id])
+      room = players[socket.id].room;
+    if(room && rooms[room]){
+      const [p1,p2] = rooms[room] ;
+      io.to(p1).emit('gone');
+      io.to(p2).emit('gone');
+      
+      delete rooms[room];
+      delete players[p1];
+      delete players[p2];
+    }
+    
+    
   })
 })
 

@@ -2,7 +2,7 @@ import { React, useState, useEffect } from "react";
 import {useNavigate} from 'react-router-dom'
 import "./Game.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faL, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faL, faMaskFace, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import io from 'socket.io-client'
 import cross from '../cross.png'
 import circle from '../circle.png'
@@ -55,6 +55,9 @@ export default function Game() {
   const [gameId, setGameId] = useState();
   const jwttoken=localStorage.getItem('jwt')||'';
   const [gameOver, setGameover] = useState(false);
+  const [show,setShow]= useState(false);
+  const [msg,setmsg] =useState('');
+  var status;
   useEffect(() => {
     const fetchGame = async () => {
       try {
@@ -97,7 +100,15 @@ export default function Game() {
     fetchGame();
   }, []);
 
+  useEffect(()=>{
+    if(show){
+      setShow(false);
+      alert(msg);
+    }
+  },[show]);
+
   function logout(){
+    localStorage.setItem('jwt','');
     navigate('/');
   }
 
@@ -127,7 +138,7 @@ export default function Game() {
     if(cells[i] === null)
       gameEnd=false;
   }
-  let status;
+  
 
   if (gameWinner) {
     status = 'Winner: ' + (gameWinner===playingAs ? playerName : opponentPLayer);
@@ -137,7 +148,7 @@ export default function Game() {
   else {
     status = (
       <div>
-        Next player: 
+        Next player :&nbsp;
         {nextMoves === 'X' ? (
           <img src={cross} height={20} width={20}  alt=''/>
         ) : (
@@ -148,10 +159,10 @@ export default function Game() {
   }
 
   if((gameWinner||gameEnd)&& !gameOver){
-    
     setGameover(true);
     console.log(gameEnd, gameWinner);
-    alert(status);
+    setmsg(status);
+    setShow(true);
   
     socket.emit("game_over",{
       id:gameId, 
@@ -202,13 +213,20 @@ export default function Game() {
     setNextmoves(nxMv);
     // console.log(playerName, opponentPLayer, room, playingAs);
   })
+  socket.on('gone',()=>{
+    setmsg("Opponent Gone !!!");
+    setShow(true)
+    socket.disconnect();
+    
+    setEnd();
+  })
 
   return (
     <div> 
 
       <div className="navbar">
         <span className="title">Tic-Tac-Toe</span>
-        <span className="username">Logged in as <button className="logout" onClick={logout}>logout</button><br/> {playerName}<br/>
+        <span className="username"> {playerName}<br/><button className="logout" onClick={logout}>logout</button>
         </span>
       </div>
       <div className="page"> 
@@ -226,19 +244,20 @@ export default function Game() {
                 </div>}
           {playerOnline && gameStart && <div>
             <div className="nextmove">
-              
               {status} 
             </div>
             
             <div className="playername">
-              <div className="signs">
-                <span className={`crosssign ${nextMoves === 'X'? 'turn':''}`}></span>
-                <span className={`circlesign ${nextMoves === 'O'? 'turn':''}`}></span>
+              
+            <div className={`player1 ${playingAs === nextMoves? 'turn':''}`} >
+                    <div className={playingAs === 'X' ?'crosssign':'circlesign'}></div>
+                    <div>{playerName}</div>
               </div>
-              <div className="playernames">
-                <span className={`player1 ${nextMoves === 'X'? 'turn':''}`}>{playingAs=== 'X' ? playerName: opponentPLayer}</span>
-                <span className={`player2 ${nextMoves === 'O'? 'turn':''}`}>{playingAs=== 'O' ? playerName: opponentPLayer}</span>
+              <div className={`player2 ${playingAs !== nextMoves? 'turn':''}`} >
+                    <div className={playingAs === 'X' ?'circlesign':'crosssign'}></div>
+                    <div>{opponentPLayer}</div>
               </div>
+
             </div>
 
             <div className="board">
