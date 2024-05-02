@@ -1,4 +1,4 @@
-import { React } from "react";
+import { React, StrictMode } from "react";
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom'
 import "./App.css";
 import Game from './components/Game';
@@ -8,13 +8,15 @@ import Register from './components/Register';
 export default function App() {
   
   return (
-    <Router>
-      <Routes>
-      <Route path ='/' element={<Login/>}></Route>
-      <Route path ='/register' element={<Register/>}></Route>
-      <Route path ='/game' element={<Game/>}></Route>
-          
-      </Routes>
-    </Router>
+    <StrictMode>
+      <Router>
+        <Routes>
+        <Route path ='/' element={<Login/>}></Route>
+        <Route path ='/register' element={<Register/>}></Route>
+        <Route path ='/game' element={<Game/>}></Route>
+            
+        </Routes>
+      </Router>
+    </StrictMode>
   );
 }
