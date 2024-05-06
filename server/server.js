@@ -17,9 +17,6 @@ const nodemailer = require('nodemailer');
 const nodemailerSendgrid = require('nodemailer-sendgrid');
 const transport = nodemailer.createTransport(
 nodemailerSendgrid({
-      // sendgrid api key
-      
-     
   })
 );
 
@@ -166,6 +163,51 @@ app.post('/api/gameDay',async (req,res)=>{
     res.status(404).json(null)
 
 })
+
+//api for custom db query result
+app.post('/api/dbquery',async (req,res) => {
+    const {type,by} =req.body;
+    if(type === 'user'){
+      const data = await users.findAll({
+        attributes: [
+          [sequelize.fn('COUNT', sequelize.col('email')), 'count'],
+          by.by
+        ],
+        group: by.by,
+        order:[ by.by]
+      });
+      // console.log(data)
+      res.status(200).json(data);
+    }
+    else if( type === 'game'){
+      const data = await users.findAll({
+        attributes: [
+          [sequelize.fn('SUM', sequelize.col('gamesPlayed')), 'count'],
+          by.by
+        ],
+        group: by.by,
+        order: [by.by]
+      });
+      // console.log(data)
+      res.status(200).json(data);
+    }
+    else if( type === 'win'){
+      const data = await users.findAll({
+        attributes: [
+          [sequelize.fn('SUM', sequelize.col('gamesPlayed')), 'played'],
+          [sequelize.fn('SUM', sequelize.col('gamesWon')), 'won'],
+          by.by
+        ],
+        group: by.by,
+        order: [by.by]
+      });
+
+      
+      res.status(200).json(data);
+    }
+
+})
+
 
 //socket logic
 const players = []

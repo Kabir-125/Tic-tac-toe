@@ -221,6 +221,10 @@ export default function Game() {
     setEnd();
   })
 
+  function dash(){
+    navigate('/dashboard');
+  }
+
   return (
     <div> 
 
@@ -282,7 +286,10 @@ export default function Game() {
         <div className="side-panel">
           <div className="performance_matrix">
               <Matrix email={playerName}/>
-        </div>
+          </div>
+          <div className="stats">
+                <button className="dash" onClick={dash}> Statistics Dashboard</button>
+          </div>
         </div>
         
       </div>
