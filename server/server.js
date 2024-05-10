@@ -177,7 +177,7 @@ app.post('/api/dbquery',async (req,res) => {
         group: by.by,
         order:[ by.by]
       });
-      // console.log(data)
+      
       res.status(200).json(data);
     }
     else if( type === 'game'){
@@ -189,7 +189,7 @@ app.post('/api/dbquery',async (req,res) => {
         group: by.by,
         order: [by.by]
       });
-      // console.log(data)
+
       res.status(200).json(data);
     }
     else if( type === 'win'){
@@ -248,6 +248,7 @@ io.on("connection",(socket)=>{
             players[player1].state = "playing";
             players[player2].state = "playing";
         }
+        
       }
   })
 
@@ -261,11 +262,13 @@ io.on("connection",(socket)=>{
   })
 
   socket.on("game_over",async (data)=>{
-    console.log("game isssssssssssssssss ooooooooooooovvvvvvvvvvvvveeeeeeeeeeeerrrrrrrrrrrrr")
+
     const game = await games.findByPk(data.id);
-    if(game.winner===null){
-      console.log(data)
+    
+    if(rooms[data.room]){
+      delete rooms[data.room];
       game.winner=data.winner;
+      await game.save();
 
       //game result update
       const player1 = await users.findOne({where:{email:data.player1}})
@@ -280,38 +283,9 @@ io.on("connection",(socket)=>{
       if(data.winner===data.player2)
           player2.gamesWon++;
 
-      await game.save();
+      
       await player1.save()
       await player2.save()
-
-
-
-      // Random database input for better displaying dot matrix graph
-
-      // const testday = new Date(2024,0,1);
-      // for(let i=0;i<365;i++){
-      //   testday.setDate(testday.getDate()+1);
-      //   testday.setHours(0, 0, 0, 0);
-      //   console.log(testday);
-      //   var testd = testday.toISOString().split('T')[0];
-      //   console.log(testd);
-      //   var t1,t2,t3;
-      //   t1=parseInt(100000000*Math.random())%21;
-      //   t2=parseInt(100000000*Math.random())%21;
-      //   t3=parseInt(100000000*Math.random())%21;
-      //   if(t1*t2*t3 === 0 && t1+t2+t3>10){
-      //     t1=t2=t3=0;
-      //   }
-        
-      //   const test = await gamesPerDay.create({
-      //     email:'test@gmail.com',
-      //     date:testd,
-      //     played:t1+t2+t3,
-      //     won:t1,
-      //     lost:t2,
-      //     draw:t3
-      //   })
-      // }
 
       
       //player stat update per day
@@ -333,7 +307,7 @@ io.on("connection",(socket)=>{
         player2stat = await gamesPerDay.create({email:data.player2,date:today})
       }
 
-      console.log(player1stat,player2stat)
+      
       player1stat.played++;
       player2stat.played++;
       if(data.winner===data.player1){
@@ -351,11 +325,10 @@ io.on("connection",(socket)=>{
 
       await player1stat.save();
       await player2stat.save();
-      console.log(player1stat,player2stat)
     }
   })
 
-  //disconnet
+  //if one player gets disconnected
   socket.on('disconnect',()=>{
     var room;
     if(players[socket.id])
@@ -365,10 +338,12 @@ io.on("connection",(socket)=>{
       io.to(p1).emit('gone');
       io.to(p2).emit('gone');
       
-      delete rooms[room];
+      
       delete players[p1];
       delete players[p2];
     }
+    else
+      delete players[socket.id];
     
     
   })
