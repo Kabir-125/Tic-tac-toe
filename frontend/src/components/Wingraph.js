@@ -2,6 +2,7 @@ import React, {useEffect, useState, useRef} from "react";
 import * as d3 from "d3";
 import { parse } from "@fortawesome/fontawesome-svg-core";
 
+
 export default function Wingraph (by){
     const [data,setData] = useState();
     const [filter,setFilter]=useState(by.by);
@@ -88,7 +89,7 @@ export default function Wingraph (by){
             .attr("fill", "#920c0c")
             .transition()
             .duration(1000) 
-            .delay((d, i) => i * 100) 
+            .delay((d, i) => i * 30) 
             .attr("y", (d) => y(d.count))
             .attr("height", (d) => height - y(d.count));;
       }, [data]);

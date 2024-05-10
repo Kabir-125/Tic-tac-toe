@@ -17,6 +17,7 @@ const nodemailer = require('nodemailer');
 const nodemailerSendgrid = require('nodemailer-sendgrid');
 const transport = nodemailer.createTransport(
 nodemailerSendgrid({
+
   })
 );
 
@@ -269,7 +270,8 @@ io.on("connection",(socket)=>{
       //game result update
       const player1 = await users.findOne({where:{email:data.player1}})
       const player2 = await users.findOne({where:{email:data.player2}})
-
+      
+      
       player1.gamesPlayed = player1.gamesPlayed+1;
       if(data.winner===data.player1)
         player1.gamesWon++;
@@ -314,15 +316,24 @@ io.on("connection",(socket)=>{
       
       //player stat update per day
       const today = new Date();
-      var player1stat = await gamesPerDay.findOne({where:{email:data.player1,date:today}})
+      var player1stat = await gamesPerDay.findOne({
+                                                    where:{
+                                                      email:data.player1,
+                                                      date:today
+                                                    }})
       if(player1stat == null ){
         player1stat = await gamesPerDay.create({email:data.player1,date:today})
       }
-      var player2stat = await gamesPerDay.findOne({where:{email:data.player2, date:today}})
+      var player2stat = await gamesPerDay.findOne({
+                                                    where:{ 
+                                                      email:data.player2, 
+                                                      date:today
+                                                    }})
       if(player2stat == null ){
         player2stat = await gamesPerDay.create({email:data.player2,date:today})
       }
 
+      console.log(player1stat,player2stat)
       player1stat.played++;
       player2stat.played++;
       if(data.winner===data.player1){
@@ -340,6 +351,7 @@ io.on("connection",(socket)=>{
 
       await player1stat.save();
       await player2stat.save();
+      console.log(player1stat,player2stat)
     }
   })
 
