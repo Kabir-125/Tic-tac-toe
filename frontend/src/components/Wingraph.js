@@ -1,5 +1,7 @@
 import React, {useEffect, useState, useRef} from "react";
 import * as d3 from "d3";
+import { parse } from "@fortawesome/fontawesome-svg-core";
+
 
 export default function Wingraph (by){
     const [data,setData] = useState();
