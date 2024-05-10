@@ -58,20 +58,11 @@ export default function Game() {
   const [show,setShow]= useState(false);
   const [msg,setmsg] =useState('');
   var status;
+
   useEffect(() => {
     const fetchGame = async () => {
       try {
-        
-        // const jwtresponse = await fetch('http://localhost:5000/api/getjwt', {
-        //   method: 'GET',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        // });
-        // if(jwtresponse.ok){
-        //   const data = await jwtresponse.json();
-        //   jwttoken = data.jwt;
-        // }
+      
         const response = await fetch('http://localhost:5000/api/game', {
           method: 'POST',
           headers: {
@@ -100,10 +91,15 @@ export default function Game() {
     fetchGame();
   }, []);
 
+
+  //alert message
   useEffect(()=>{
     if(show){
       setShow(false);
-      alert(msg);
+      setTimeout(() => {
+        alert(msg);
+      }, 300);
+      
     }
   },[show]);
 
@@ -175,7 +171,10 @@ export default function Game() {
     gameEnd=null;
     gameWinner=null;
     socket.disconnect();
-    setEnd();
+    setTimeout(() => {
+      setEnd();
+    }, 1000);
+    
   }
   function setEnd() {
     console.log("show")
@@ -220,6 +219,10 @@ export default function Game() {
     
     setEnd();
   })
+
+  function dash(){
+    navigate('/dashboard');
+  }
 
   return (
     <div> 
@@ -282,7 +285,10 @@ export default function Game() {
         <div className="side-panel">
           <div className="performance_matrix">
               <Matrix email={playerName}/>
-        </div>
+          </div>
+          <div className="stats">
+                <button className="dash" onClick={dash}> Statistics Dashboard</button>
+          </div>
         </div>
         
       </div>

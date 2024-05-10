@@ -17,9 +17,7 @@ const nodemailer = require('nodemailer');
 const nodemailerSendgrid = require('nodemailer-sendgrid');
 const transport = nodemailer.createTransport(
 nodemailerSendgrid({
-      // sendgrid api key
       
-     
   })
 );
 
@@ -167,6 +165,51 @@ app.post('/api/gameDay',async (req,res)=>{
 
 })
 
+//api for custom db query result
+app.post('/api/dbquery',async (req,res) => {
+    const {type,by} =req.body;
+    if(type === 'user'){
+      const data = await users.findAll({
+        attributes: [
+          [sequelize.fn('COUNT', sequelize.col('email')), 'count'],
+          by.by
+        ],
+        group: by.by,
+        order:[ by.by]
+      });
+      // console.log(data)
+      res.status(200).json(data);
+    }
+    else if( type === 'game'){
+      const data = await users.findAll({
+        attributes: [
+          [sequelize.fn('SUM', sequelize.col('gamesPlayed')), 'count'],
+          by.by
+        ],
+        group: by.by,
+        order: [by.by]
+      });
+      // console.log(data)
+      res.status(200).json(data);
+    }
+    else if( type === 'win'){
+      const data = await users.findAll({
+        attributes: [
+          [sequelize.fn('SUM', sequelize.col('gamesPlayed')), 'played'],
+          [sequelize.fn('SUM', sequelize.col('gamesWon')), 'won'],
+          by.by
+        ],
+        group: by.by,
+        order: [by.by]
+      });
+
+      
+      res.status(200).json(data);
+    }
+
+})
+
+
 //socket logic
 const players = []
 const rooms =[]
@@ -227,7 +270,8 @@ io.on("connection",(socket)=>{
       //game result update
       const player1 = await users.findOne({where:{email:data.player1}})
       const player2 = await users.findOne({where:{email:data.player2}})
-
+      
+      
       player1.gamesPlayed = player1.gamesPlayed+1;
       if(data.winner===data.player1)
         player1.gamesWon++;
@@ -272,15 +316,24 @@ io.on("connection",(socket)=>{
       
       //player stat update per day
       const today = new Date();
-      var player1stat = await gamesPerDay.findOne({where:{email:data.player1,date:today}})
+      var player1stat = await gamesPerDay.findOne({
+                                                    where:{
+                                                      email:data.player1,
+                                                      date:today
+                                                    }})
       if(player1stat == null ){
         player1stat = await gamesPerDay.create({email:data.player1,date:today})
       }
-      var player2stat = await gamesPerDay.findOne({where:{email:data.player2, date:today}})
+      var player2stat = await gamesPerDay.findOne({
+                                                    where:{ 
+                                                      email:data.player2, 
+                                                      date:today
+                                                    }})
       if(player2stat == null ){
         player2stat = await gamesPerDay.create({email:data.player2,date:today})
       }
 
+      console.log(player1stat,player2stat)
       player1stat.played++;
       player2stat.played++;
       if(data.winner===data.player1){
@@ -298,6 +351,7 @@ io.on("connection",(socket)=>{
 
       await player1stat.save();
       await player2stat.save();
+      console.log(player1stat,player2stat)
     }
   })
 

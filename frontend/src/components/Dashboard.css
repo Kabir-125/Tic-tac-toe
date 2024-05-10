@@ -1,0 +1,33 @@
+.container{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-content: center;
+    align-items: center;
+    margin-top: 70px;
+}
+
+.sec{
+    margin-bottom: 20px;
+    margin-top: 50px;
+}
+
+
+.back{
+    font-size: 20px;
+    padding: 12px 24px;
+    border: none;
+    background-color: #222496;
+    color: #ffffff;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background-color 0.3s ease;
+    margin-top: 40px;
+    margin-left: 60px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    align-self: center;
+  }
+  .back:hover {
+    background-color: #001a70;
+  }
+  
