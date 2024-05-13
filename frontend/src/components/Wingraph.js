@@ -3,9 +3,9 @@ import * as d3 from "d3";
 import { parse } from "@fortawesome/fontawesome-svg-core";
 
 
-export default function Wingraph (by){
+export default function Wingraph (props){
     const [data,setData] = useState();
-    const [filter,setFilter]=useState(by.by);
+    const [filter,setFilter]=useState(props.graphFilter);
     const ref = useRef();
 
     useEffect(()=>{
@@ -15,7 +15,7 @@ export default function Wingraph (by){
                 headers: {
                     "Content-Type": "application/json",
                   },
-                body:JSON.stringify({type:"win", by})
+                body:JSON.stringify({type:"win", filter: props.graphFilter})
             });
 
             if(response.ok){
@@ -28,13 +28,12 @@ export default function Wingraph (by){
                         ...rest
                     })
                 });
-                console.log(res,result);
                 setData(result);
             }
         }
-        setFilter(by.by)
+        setFilter(props.graphFilter)
         getdata();
-    },[by]);
+    },[props]);
     // console.log(data);
 
     

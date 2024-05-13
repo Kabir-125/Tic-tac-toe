@@ -1,9 +1,9 @@
 import React, {useEffect, useState, useRef} from "react";
 import * as d3 from "d3";
 
-export default function GamesGraph (by){
+export default function GamesGraph (props){
     const [data,setData] = useState();
-    const [filter,setFilter]=useState(by.by);
+    const [filter,setFilter]=useState(props.graphFilter);
     const ref = useRef();
 
     useEffect(()=>{
@@ -13,7 +13,7 @@ export default function GamesGraph (by){
                 headers: {
                     "Content-Type": "application/json",
                   },
-                body:JSON.stringify({type:"game", by})
+                body:JSON.stringify({type:"game", filter: props.graphFilter})
             });
 
             if(response.ok){
@@ -21,9 +21,9 @@ export default function GamesGraph (by){
                 setData(res);
             }
         }
-        setFilter(by.by)
+        setFilter(props.graphFilter)
         getdata();
-    },[by]);
+    },[props]);
 
     
 

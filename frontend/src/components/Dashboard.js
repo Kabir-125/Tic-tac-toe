@@ -36,7 +36,7 @@ export default function Dashboard(){
                     </select>
                 </div>
 
-                <UserGraph by={userCntBy} />
+                <UserGraph graphFilter={userCntBy} />
 
 
                 <div className="sec">
@@ -50,7 +50,7 @@ export default function Dashboard(){
                     </select>
                 </div>
 
-                <GamesGraph by={gamesBy}/>
+                <GamesGraph graphFilter={gamesBy}/>
 
 
                 <div className="sec">
@@ -64,7 +64,7 @@ export default function Dashboard(){
                     </select>
                 </div>
 
-                <Wingraph by={winBy}/>
+                <Wingraph graphFilter={winBy}/>
 
 
             </div>

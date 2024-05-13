@@ -5,7 +5,6 @@ const bodyParser = require("body-parser");
 const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const jwt = require("jsonwebtoken");
-var userJwt = "";
 const cors = require("cors");
 const { Server } = require("socket.io");
 const http = require("http");
@@ -16,31 +15,26 @@ const gamesPerDay = require("./gamesPerDay");
 const nodemailer = require("nodemailer");
 const nodemailerSendgrid = require("nodemailer-sendgrid");
 require("dotenv").config();
-const transport = nodemailer.createTransport(
-  nodemailerSendgrid({
-    apiKey: process.env.SENDGRID_KEY,
-  })
-);
-
 const app = express();
-
-//middlewares
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(passport.initialize());
 app.use(cors());
-
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
   },
 });
-// Loging a user and return a JWT token
 const jwtMethod = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: "Amar secret key",
 };
+const transport = nodemailer.createTransport(
+  nodemailerSendgrid({
+    apiKey: process.env.SENDGRID_KEY
+  })
+);
 
 passport.use(
   new JwtStrategy(jwtMethod, (jwtData, done) => {
@@ -54,18 +48,12 @@ passport.use(
 
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
-  const cur_user = await users.findOne({ where: { email: email } });
-  console.log(cur_user);
+  const authUser = await users.findOne({ where: { email: email } });
 
-  if (cur_user !== null) {
-    if (email === cur_user.email && password === cur_user.password) {
-      // Login successful
-      const jwttoken = jwt.sign({ sub: email }, "Amar secret key");
-      cur_user.jwt = jwttoken;
-      userJwt = jwttoken;
-
-      await cur_user.save();
-      res.status(200).json({ message: "Successful login", jwt: jwttoken });
+  if (authUser !== null) {
+    if (email === authUser.email && password === authUser.password) {
+      const jwtToken = jwt.sign({ sub: email }, "Amar secret key");
+      res.status(200).json({ message: "Successful login", jwt: jwtToken });
     } else {
       res.status(401).json({ error: "Incorrect Password" });
     }
@@ -74,21 +62,18 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-app.get("/api/getjwt", (req, res) => {
-  res.status(200).json({ jwt: userJwt });
-});
-// registering a new user
+
+
 app.post("/api/register", async (req, res) => {
   const { email, password, repassword } = req.body;
-
-  var found = await users.findOne({ where: { email: email } });
+  var existingUser = await users.findOne({ where: { email: email } });
 
   if (password !== repassword) {
     res.status(401).json({ error: "Both password should match" });
-  } else if (found !== null) {
+  } else if (existingUser !== null) {
     res.status(401).json({ error: "User exits !!!" });
   } else {
-    //verification
+    //verification mail
     const code = parseInt(Math.random() * 10000);
     console.log(code);
     transport.sendMail({
@@ -121,19 +106,11 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/verifiedRegister", async (req, res) => {
   const { email, password } = req.body;
   try {
-    sequelize
-      .sync()
-      .then(() => {
-        console.log("Database synchronized");
-      })
-      .catch((err) => {
-        console.error("Error synchronizing database:", err);
-      });
-    const jwttoken = jwt.sign({ sub: email }, "Amar secret key");
-    const newUser = await users.create({
+    const jwtToken = jwt.sign({ sub: email }, "Amar secret key");
+    await users.create({
       email: email,
       password: password,
-      jwt: jwttoken,
+      jwt: jwtToken,
     });
     res.status(200).json({ message: "User successfully added." });
   } catch (error) {
@@ -143,63 +120,60 @@ app.post("/api/verifiedRegister", async (req, res) => {
 });
 
 // game section veryfying through jwt
-app.post(
-  "/api/game",
-  passport.authenticate("jwt", { session: false }),
-  (req, res) => {
+app.post( "/api/game", passport.authenticate("jwt", { session: false }), (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     const decodedToken = jwt.decode(token);
     const userEmail = decodedToken.sub;
-
     res.status(200).json({ verified: "yes", email: userEmail });
   }
 );
 
 // get games details played by user on each days
 app.post("/api/gameDay", async (req, res) => {
-  const { email } = req.body;
+  const {email} = req.body;
   if (email) {
     const usersday = await gamesPerDay.findAll({ where: { email: email } });
     res.status(200).json(usersday);
-  } else res.status(404).json(null);
+  } 
+  else 
+    res.status(404).json(null);
 });
 
 //api for custom db query result
 app.post("/api/dbquery", async (req, res) => {
-  const { type, by } = req.body;
+  const {type, filter} = req.body;
   if (type === "user") {
     const data = await users.findAll({
       attributes: [
         [sequelize.fn("COUNT", sequelize.col("email")), "count"],
-        by.by,
+        filter,
       ],
-      group: by.by,
-      order: [by.by],
+      group: filter,
+      order: [filter],
     });
-
     res.status(200).json(data);
-  } else if (type === "game") {
+  } 
+  else if (type === "game") {
     const data = await users.findAll({
       attributes: [
         [sequelize.fn("SUM", sequelize.col("gamesPlayed")), "count"],
-        by.by,
+        filter,
       ],
-      group: by.by,
-      order: [by.by],
+      group: filter,
+      order: [filter],
     });
-
     res.status(200).json(data);
-  } else if (type === "win") {
+  } 
+  else if (type === "win") {
     const data = await users.findAll({
       attributes: [
         [sequelize.fn("SUM", sequelize.col("gamesPlayed")), "played"],
         [sequelize.fn("SUM", sequelize.col("gamesWon")), "won"],
-        by.by,
+        filter,
       ],
-      group: by.by,
-      order: [by.by],
+      group: filter,
+      order: [filter],
     });
-
     res.status(200).json(data);
   }
 });
@@ -207,6 +181,7 @@ app.post("/api/dbquery", async (req, res) => {
 //socket logic
 const players = [];
 const rooms = [];
+
 io.on("connection", (socket) => {
   socket.on("start", async (data) => {
     players[socket.id] = { state: "Waiting", name: data.playerName };
@@ -330,15 +305,18 @@ io.on("connection", (socket) => {
   //if one player gets disconnected
   socket.on("disconnect", () => {
     var room;
-    if (players[socket.id]) room = players[socket.id].room;
+    if (players[socket.id]) 
+      room = players[socket.id].room;
+    
     if (room && rooms[room]) {
       const [p1, p2] = rooms[room];
       io.to(p1).emit("gone");
       io.to(p2).emit("gone");
-
       delete players[p1];
       delete players[p2];
-    } else delete players[socket.id];
+    } 
+    else 
+      delete players[socket.id];
   });
 });
 
