@@ -1,6 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('./db')
-
 const users = sequelize.define('users',  {
         email: {
             type: DataTypes.STRING,
@@ -32,8 +31,6 @@ const users = sequelize.define('users',  {
         gamesWon:{
             type:DataTypes.INTEGER
         },
-        
     });
-
 
 module.exports = users;

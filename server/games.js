@@ -1,6 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('./db')
-
 const games = sequelize.define('games',  {
         room: {
             type: DataTypes.STRING,

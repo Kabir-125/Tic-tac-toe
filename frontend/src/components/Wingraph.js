@@ -1,7 +1,5 @@
 import React, {useEffect, useState, useRef} from "react";
 import * as d3 from "d3";
-import { parse } from "@fortawesome/fontawesome-svg-core";
-
 
 export default function Wingraph (props){
     const [data,setData] = useState();
@@ -17,7 +15,6 @@ export default function Wingraph (props){
                   },
                 body:JSON.stringify({type:"win", filter: props.graphFilter})
             });
-
             if(response.ok){
                 const res = await response.json();
                 var result =[]
@@ -34,21 +31,16 @@ export default function Wingraph (props){
         setFilter(props.graphFilter)
         getdata();
     },[props]);
-    // console.log(data);
-
-    
 
     useEffect(() => {
         if(!data)
             return;
-        // console.log(data);
         d3.select(ref.current).selectAll("*").remove();
-        // set the dimensions and margins of the graph
+        
         const margin = { top: 30, right: 30, bottom: 70, left: 60 },
           width = 760 - margin.left - margin.right,
           height = 400 - margin.top - margin.bottom;
     
-        // append the svg object to the body of the page
         const svg = d3
           .select(ref.current)
           .append("svg")
@@ -57,13 +49,12 @@ export default function Wingraph (props){
           .append("g")
           .attr("transform", `translate(${margin.left},${margin.top})`);
     
-        
-          // X axis
           const x = d3
             .scaleBand()
             .range([0, width])
             .domain(data.map((d) => d[filter]))
             .padding(0.2);
+
           svg
             .append("g")
             .attr("transform", `translate(0, ${height})`)
@@ -72,11 +63,9 @@ export default function Wingraph (props){
             .attr("transform", "translate(-10,0)rotate(-45)")
             .style("text-anchor", "end");
     
-          // Add Y axis
           const y = d3.scaleLinear().domain([0, Math.max(...data.map(d =>d.count))]).range([height, 0]);
           svg.append("g").call(d3.axisLeft(y));
     
-          // Bars
           svg
             .selectAll("barchart")
             .data(data)
@@ -92,9 +81,6 @@ export default function Wingraph (props){
             .attr("y", (d) => y(d.count))
             .attr("height", (d) => height - y(d.count));;
       }, [data]);
-
-
-
 
     return (
         <svg height={'400px'} width={'760px' } id='barchart' ref={ref}> </svg>

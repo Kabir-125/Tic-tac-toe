@@ -1,6 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('./db')
-
 const gamesPerDay = sequelize.define('gamesPerDay',  {
         email: {
             type: DataTypes.STRING,
@@ -22,9 +21,7 @@ const gamesPerDay = sequelize.define('gamesPerDay',  {
         },
         draw:{
             type:DataTypes.INTEGER
-        }
-        
+        },
     });
-
 
 module.exports = gamesPerDay;

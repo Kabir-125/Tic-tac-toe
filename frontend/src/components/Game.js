@@ -2,7 +2,7 @@ import { React, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Game.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faL, faMaskFace, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import {faSpinner } from "@fortawesome/free-solid-svg-icons";
 import io from "socket.io-client";
 import cross from "../cross.png";
 import circle from "../circle.png";
@@ -15,13 +15,11 @@ function Cell({ value, onCellClick, isWin }) {
       className={`cell ${isWin ? "highlight" : ""}`}
       onClick={onCellClick}
     >
-      {value === "X" ? (
-        <img src={cross} height={80} width={80} alt="" />
-      ) : value === "O" ? (
-        <img src={circle} height={80} width={80} alt="" />
-      ) : (
-        value
-      )}
+      {value === "X" 
+        ? ( <img src={cross} height={80} width={80} alt="" /> ) 
+        : value === "O" 
+          ? ( <img src={circle} height={80} width={80} alt="" /> ) 
+          : ( value )}
     </button>
   );
 }
@@ -76,16 +74,16 @@ export default function Game() {
         });
 
         if (response.ok) {
-          const data = await response.json();
-          if (data.verified !== "yes") {
-            navigate("/");
+            const data = await response.json();
+            if (data.verified !== "yes") {
+                navigate("/");
+              } else {
+                setPlayerName(data.email);
+              }
           } else {
-            setPlayerName(data.email);
+            console.error("Error:", response.statusText);
+            navigate("/");
           }
-        } else {
-          console.error("Error:", response.statusText);
-          navigate("/");
-        }
       } catch (error) {
         console.error("Error:", error);
         navigate("/");
@@ -165,11 +163,9 @@ export default function Game() {
     nextStatus = (
       <div>
         Next player :&nbsp;
-        {nextMoves === "X" ? (
-          <img src={cross} height={20} width={20} alt="" />
-        ) : (
-          <img src={circle} height={20} width={20} alt="" />
-        )}
+        {nextMoves === "X" 
+        ? ( <img src={cross} height={20} width={20} alt="" /> ) 
+        : ( <img src={circle} height={20} width={20} alt="" /> )}
       </div>
     );
   }

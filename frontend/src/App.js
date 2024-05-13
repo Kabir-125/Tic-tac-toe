@@ -8,7 +8,6 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 
 export default function App() {
-  
   return (
     <StrictMode>
       <Router>

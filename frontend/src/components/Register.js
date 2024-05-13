@@ -4,22 +4,20 @@ import {Link, useNavigate} from 'react-router-dom'
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import "./Register.css";
-
+//setCode
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repassword, setRePassword] = useState("");
   const [sentCode, setSentCode] = useState(false);
-  const [code, setCode] = useState();
+  const [enteredCode, setEnteredCode] = useState();
   const navigate =useNavigate();
   function validateForm() {
     return email.length > 0 && password.length > 0 && repassword.length > 0;
   }
 
   function handleSubmit(event) {
-
     event.preventDefault();
-    
     const data = {email, password, repassword};
 
     fetch("http://localhost:5000/api/register", {
@@ -41,10 +39,7 @@ export default function Register() {
       if (data.error) {
         alert(data.error);
       } else {
-        //successfull registration
         setSentCode(data.sent);
-        // alert(data.message);
-        // navigate("/")
       }
     })
     .catch((error) => {
@@ -57,7 +52,7 @@ export default function Register() {
   function handleCodeSubmit(e){
     e.preventDefault();
     const data ={email, password}
-    if(parseInt(code) === parseInt(sentCode)){
+    if(parseInt(enteredCode) === parseInt(sentCode)){
       fetch("http://localhost:5000/api/verifiedRegister", {
         method: "POST",
         headers: {
@@ -77,7 +72,6 @@ export default function Register() {
         if (data.error) {
           alert(data.error);
         } else {
-          //successfull verification
           navigate("/")
         }
       })
@@ -103,8 +97,8 @@ export default function Register() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-
         </Form.Group>
+
         <Form.Group size="lg" controlId="password">
           <Form.Label>Password</Form.Label>
           <Form.Control
@@ -112,7 +106,6 @@ export default function Register() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-
         </Form.Group>
 
         <Form.Group size="lg" controlId="repassword">
@@ -122,8 +115,8 @@ export default function Register() {
             value={repassword}
             onChange={(e) => setRePassword(e.target.value)}
           />
-
         </Form.Group>
+
         <Button block size="lg" type="submit" disabled={!validateForm()}>
           Register
         </Button>
@@ -136,11 +129,12 @@ export default function Register() {
               <Form.Control
                 autoFocus
                 type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={enteredCode}
+                onChange={(e) => setEnteredCode(e.target.value)}
               />
             </Form.Group>
-            <Button block size="lg" type="submit" disabled={!code}>
+            
+            <Button block size="lg" type="submit" disabled={!enteredCode}>
               Confirm Code
             </Button>
           </Form>

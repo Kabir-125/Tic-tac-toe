@@ -1,22 +1,20 @@
-
 import React, { useState } from "react";
 import {Link, useNavigate} from 'react-router-dom'
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import "./Login.css";
 
-
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+
   function validateForm() {
     return email.length > 0 && password.length > 0;
   }
 
   function handleSubmit(event) {
     event.preventDefault(); 
-
     const data={email,password}
     fetch("http://localhost:5000/api/login", {
       method: "POST",
@@ -47,10 +45,6 @@ export default function Login() {
       alert(error);
       console.error("There was a problem with the fetch operation:", error);
     })
-
-    
-
-
   }
 
   return (
@@ -64,8 +58,8 @@ export default function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-
         </Form.Group>
+
         <Form.Group size="lg" controlId="password">
           <Form.Label>Password</Form.Label>
           <Form.Control
@@ -73,8 +67,8 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-
         </Form.Group>
+        
         <Button block size="lg" type="submit" disabled={!validateForm()}>
           Login
         </Button>

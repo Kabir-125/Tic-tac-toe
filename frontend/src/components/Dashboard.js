@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useState} from "react";
 import {useNavigate} from 'react-router-dom'
 import UserGraph from "./UserGraph";
 import Wingraph from "./Wingraph";
@@ -6,25 +6,24 @@ import GamesGraph from "./GamesGraph";
 import './Dashboard.css'
 
 export default function Dashboard(){
-
     const [userCntBy, setUsercntBy] = useState('country');
     const [gamesBy, setGamesBy] = useState('age');
     const [winBy, setWinBy] = useState('gender');
     const navigate =useNavigate();
-    
-
 
     return (
         <div>
             <div className="navbar">
-                <span className="title">Tic-Tac-Toe</span>
-                
+                <span className="title">
+                    Tic-Tac-Toe
+                </span>
             </div>
             <div>
-                <button className="back" onClick={()=>{navigate('/game');}}> Go back to Home page</button>
+                <button className="back" onClick={()=>{navigate('/game');}}> 
+                    Go back to Home page
+                </button>
             </div>
             <div className="container">
-
                 <div className="sec">
                     <span>
                         User count of this game by: 
@@ -35,9 +34,7 @@ export default function Dashboard(){
                         <option value='gender'>gender</option>
                     </select>
                 </div>
-
                 <UserGraph graphFilter={userCntBy} />
-
 
                 <div className="sec">
                     <span>
@@ -49,9 +46,7 @@ export default function Dashboard(){
                         <option value='gender'>gender</option>
                     </select>
                 </div>
-
                 <GamesGraph graphFilter={gamesBy}/>
-
 
                 <div className="sec">
                     <span>
@@ -63,10 +58,7 @@ export default function Dashboard(){
                         <option value='gender'>gender</option>
                     </select>
                 </div>
-
                 <Wingraph graphFilter={winBy}/>
-
-
             </div>
         </div>
     );
