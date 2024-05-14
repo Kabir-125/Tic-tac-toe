@@ -3,11 +3,14 @@ import {Link, useNavigate} from 'react-router-dom'
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import "./Login.css";
+import { useDispatch } from "react-redux";
+import { set } from '../store/slices/jwt'
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   function validateForm() {
     return email.length > 0 && password.length > 0;
@@ -36,7 +39,7 @@ export default function Login() {
         alert(data.error);
       } else {
         //successful login
-        localStorage.setItem('jwt',data.jwt)
+        dispatch(set(data.jwt))
         alert(data.message);
         navigate("/game");
       }

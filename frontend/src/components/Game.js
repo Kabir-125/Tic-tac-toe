@@ -7,6 +7,8 @@ import io from "socket.io-client";
 import cross from "../cross.png";
 import circle from "../circle.png";
 import Matrix from "./Matrix";
+import { useDispatch, useSelector } from "react-redux";
+import { set } from '../store/slices/jwt'
 var socket = io.connect("http://localhost:5001");
 
 function Cell({ value, onCellClick, isWin }) {
@@ -56,11 +58,12 @@ export default function Game() {
   const navigate = useNavigate();
   const [room, setRoom] = useState();
   const [gameId, setGameId] = useState();
-  const jwtToken = localStorage.getItem("jwt") || "";
   const [gameOver, setGameover] = useState(false);
   const [alertShown, setAlertShown] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   var nextStatus;
+  const jwtToken = useSelector(state => state.jwt.value);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -102,14 +105,14 @@ export default function Game() {
   }, [alertShown]);
 
   function logout() {
-    localStorage.setItem("jwt", "");
+    dispatch(set(""));
     navigate("/");
   }
 
   function cellClick(i) {
-    const res = winner(cells);
+    const result = winner(cells);
 
-    if (res[0] || cells[i] || nextMoves !== playingAs) {
+    if (result[0] !== null || cells[i] !== null || nextMoves !== playingAs) {
       //not a valid click
       return;
     }
@@ -197,7 +200,6 @@ export default function Game() {
   }
 
   socket.on("room_assigned", (data) => {
-    console.log(data);
     setOpponentPlayer(data.opponent);
     setPlayingAs(data.playingAs);
     setGameStart(true);
